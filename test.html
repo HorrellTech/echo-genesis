@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Genesis - Game Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: #1a1a2e;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        
+        #gameCanvas {
+            border: 2px solid #4fd1c7;
+            background: #0f1419;
+        }
+        
+        .game-info {
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        .controls {
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+            color: #a0aec0;
+        }
+        
+        .error {
+            color: #e53e3e;
+            background: rgba(229, 62, 62, 0.1);
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Echo Genesis - Engine Test</h1>
+    <canvas id="gameCanvas" width="1024" height="768"></canvas>
+    
+    <div class="game-info">
+        <div>
+            <strong>Controls:</strong>
+            Arrow Keys or WASD - Move, Space - Jump, Shift - Dash (when unlocked)
+        </div>
+        <div class="controls">
+            F1 - Debug Mode, F2 - Show FPS, F11 - Fullscreen
+        </div>
+    </div>
+    
+    <div id="errorOutput"></div>
+    
+    <script type="module">
+        import { Vector2 } from './js/utils/Vector2.js';
+        import { GameObject } from './js/core/GameObject.js';
+        import { InputManager } from './js/core/InputManager.js';
+        import { Camera } from './js/core/Camera.js';
+        import { Renderer } from './js/core/Renderer.js';
+        import { Physics } from './js/core/Physics.js';
+        import { World } from './js/core/World.js';
+        import { AudioManager } from './js/core/AudioManager.js';
+        import { Game } from './js/core/Game.js';
+        
+        // Error handling
+        window.addEventListener('error', (e) => {
+            const errorDiv = document.getElementById('errorOutput');
+            errorDiv.innerHTML += `<div class="error">Error: ${e.message}<br>File: ${e.filename}:${e.lineno}</div>`;
+            console.error('Game Error:', e);
+        });
+        
+        // Initialize game
+        try {
+            const canvas = document.getElementById('gameCanvas');
+            const game = new Game(canvas);
+            
+            // Make game globally accessible for debugging
+            window.game = game;
+            
+            // Start the game
+            game.start();
+            
+            console.log('Echo Genesis initialized successfully!');
+            
+        } catch (error) {
+            const errorDiv = document.getElementById('errorOutput');
+            errorDiv.innerHTML = `<div class="error">Failed to initialize game: ${error.message}</div>`;
+            console.error('Initialization Error:', error);
+        }
+    </script>
+</body>
+</html>

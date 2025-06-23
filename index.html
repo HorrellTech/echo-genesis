@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Genesis - Metroidvania Adventure</title>
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+    <div class="container">
+        <header class="hero-section">
+            <h1 class="game-title">Echo Genesis</h1>
+            <p class="game-subtitle">A Metroidvania Adventure</p>
+        </header>
+        
+        <main class="main-menu">
+            <div class="menu-buttons">
+                <button class="menu-btn" onclick="location.href='game.html'">
+                    <span class="btn-icon">🎮</span>
+                    <span class="btn-text">Play Game</span>
+                </button>
+                
+                <button class="menu-btn" onclick="location.href='editor.html'">
+                    <span class="btn-icon">🛠️</span>
+                    <span class="btn-text">Level Editor</span>
+                </button>
+                
+                <button class="menu-btn" id="loadBtn">
+                    <span class="btn-icon">📂</span>
+                    <span class="btn-text">Load Custom Level</span>
+                </button>
+                
+                <button class="menu-btn" onclick="showControls()">
+                    <span class="btn-icon">⌨️</span>
+                    <span class="btn-text">Controls</span>
+                </button>
+                
+                <button class="menu-btn" onclick="showAbout()">
+                    <span class="btn-icon">ℹ️</span>
+                    <span class="btn-text">About</span>
+                </button>
+            </div>
+        </main>
+        
+        <div id="controlsModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="hideModal('controlsModal')">&times;</span>
+                <h2>Game Controls</h2>
+                <div class="controls-grid">
+                    <div class="control-group">
+                        <h3>Movement</h3>
+                        <p><kbd>A</kbd> / <kbd>←</kbd> - Move Left</p>
+                        <p><kbd>D</kbd> / <kbd>→</kbd> - Move Right</p>
+                        <p><kbd>W</kbd> / <kbd>↑</kbd> - Climb/Interact</p>
+                        <p><kbd>S</kbd> / <kbd>↓</kbd> - Crouch/Drop</p>
+                    </div>
+                    <div class="control-group">
+                        <h3>Actions</h3>
+                        <p><kbd>Space</kbd> - Jump</p>
+                        <p><kbd>Shift</kbd> - Dash (when unlocked)</p>
+                        <p><kbd>X</kbd> - Attack (when unlocked)</p>
+                        <p><kbd>Z</kbd> - Special Action</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="aboutModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="hideModal('aboutModal')">&times;</span>
+                <h2>About Echo Genesis</h2>
+                <p>Echo Genesis is a Metroidvania-style platformer where you explore interconnected worlds, 
+                   collect power-ups, and uncover the mysteries of a forgotten realm.</p>
+                <h3>Features:</h3>
+                <ul>
+                    <li>Explore vast interconnected levels</li>
+                    <li>Collect power-ups to unlock new abilities</li>
+                    <li>Built-in level editor for creating custom content</li>
+                    <li>Smooth platforming mechanics</li>
+                    <li>Save/Load system for custom levels</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+    
+    <script>
+        function showControls() {
+            document.getElementById('controlsModal').style.display = 'block';
+        }
+        
+        function showAbout() {
+            document.getElementById('aboutModal').style.display = 'block';
+        }
+        
+        function hideModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+        
+        // Load custom level functionality
+        document.getElementById('loadBtn').onclick = function() {
+            document.getElementById('fileInput').click();
+        };
+        
+        document.getElementById('fileInput').onchange = function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    try {
+                        const levelData = JSON.parse(event.target.result);
+                        localStorage.setItem('customLevel', JSON.stringify(levelData));
+                        localStorage.setItem('loadCustomLevel', 'true');
+                        location.href = 'game.html';
+                    } catch (error) {
+                        alert('Invalid level file format!');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        };
+    </script>
+</body>
+</html>

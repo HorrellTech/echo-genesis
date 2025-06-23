@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Genesis - Game</title>
+    <link rel="stylesheet" href="css/game.css">
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="gameUI">
+            <div id="topUI">
+                <div id="powerUpDisplay">
+                    <h3>Abilities</h3>
+                    <div id="abilityIcons"></div>
+                </div>
+                <div id="gameStats">
+                    <div id="health">Health: <span id="healthValue">100</span></div>
+                    <div id="score">Score: <span id="scoreValue">0</span></div>
+                </div>
+                <div id="gameControls">
+                    <button id="pauseBtn">⏸️</button>
+                    <button id="menuBtn" onclick="showInGameMenu()">☰</button>
+                </div>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" width="1024" height="576"></canvas>
+        
+        <div id="pauseMenu" class="overlay-menu" style="display: none;">
+            <div class="menu-content">
+                <h2>Game Paused</h2>
+                <button class="menu-button" onclick="resumeGame()">Resume</button>
+                <button class="menu-button" onclick="showControls()">Controls</button>
+                <button class="menu-button" onclick="restartLevel()">Restart Level</button>
+                <button class="menu-button" onclick="location.href='index.html'">Main Menu</button>
+            </div>
+        </div>
+        
+        <div id="inGameMenu" class="overlay-menu" style="display: none;">
+            <div class="menu-content">
+                <h2>Menu</h2>
+                <button class="menu-button" onclick="saveGame()">Save Game</button>
+                <button class="menu-button" onclick="loadGame()">Load Game</button>
+                <button class="menu-button" onclick="showSettings()">Settings</button>
+                <button class="menu-button" onclick="hideInGameMenu()">Close</button>
+            </div>
+        </div>
+        
+        <div id="gameOverScreen" class="overlay-menu" style="display: none;">
+            <div class="menu-content">
+                <h2 id="gameOverTitle">Game Over</h2>
+                <p id="gameOverMessage">You died! Try again?</p>
+                <button class="menu-button" onclick="restartLevel()">Restart Level</button>
+                <button class="menu-button" onclick="location.href='index.html'">Main Menu</button>
+            </div>
+        </div>
+        
+        <div id="levelCompleteScreen" class="overlay-menu" style="display: none;">
+            <div class="menu-content">
+                <h2>Level Complete!</h2>
+                <p id="completionStats">Great job!</p>
+                <button class="menu-button" onclick="nextLevel()">Next Level</button>
+                <button class="menu-button" onclick="location.href='index.html'">Main Menu</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Touch controls for mobile -->
+    <div id="touchControls" class="touch-controls">
+        <div class="touch-dpad">
+            <button class="touch-btn" id="touchLeft">←</button>
+            <button class="touch-btn" id="touchRight">→</button>
+            <button class="touch-btn" id="touchUp">↑</button>
+            <button class="touch-btn" id="touchDown">↓</button>
+        </div>
+        <div class="touch-actions">
+            <button class="touch-btn action-btn" id="touchJump">Jump</button>
+            <button class="touch-btn action-btn" id="touchAttack">Attack</button>
+            <button class="touch-btn action-btn" id="touchDash">Dash</button>
+        </div>
+    </div>
+      <!-- Core Game Scripts -->
+    <script src="js/core/GameObject.js"></script>
+    <script src="js/core/World.js"></script>
+    <script src="js/core/Renderer.js"></script>
+    <script src="js/core/InputManager.js"></script>
+    <script src="js/core/Camera.js"></script>
+    <script src="js/core/Physics.js"></script>
+    <script src="js/core/AudioManager.js"></script>
+    
+    <!-- Entity Scripts -->
+    <script src="js/entities/Player.js"></script>
+    <script src="js/entities/BasicEntities.js"></script>
+    <script src="js/entities/AdvancedEntities.js"></script>
+    
+    <!-- Utility Scripts -->
+    <script src="js/utils/Vector2.js"></script>
+    <script src="js/utils/CollisionDetection.js"></script>
+    <script src="js/utils/LevelData.js"></script>
+    <script src="js/utils/LevelLoader.js"></script>
+    <script src="js/utils/SaveSystem.js"></script>
+    
+    <!-- Level Scripts -->
+    <script src="js/levels/SampleLevels.js"></script>
+    
+    <!-- Main Game Script -->
+    <script src="js/core/Game.js"></script>
+    
+    <script>
+        let game;
+        let isPaused = false;
+          // Initialize the game when page loads
+        window.addEventListener('load', () => {
+            const canvas = document.getElementById('gameCanvas');
+            game = new Game(canvas);
+            
+            // Check for level loading from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const levelParam = urlParams.get('level');
+            
+            if (levelParam) {
+                // Try to load the specified level
+                try {
+                    if (levelParam === 'tutorial') {
+                        game.loadLevel(SampleLevels.tutorial);
+                    } else if (levelParam === 'forest') {
+                        game.loadLevel(SampleLevels.forest);
+                    } else {
+                        // Try to load from saved levels
+                        const savedLevel = localStorage.getItem(`level_${levelParam}`);
+                        if (savedLevel) {
+                            game.loadLevel(JSON.parse(savedLevel));
+                        }
+                    }
+                } catch (error) {
+                    console.error('Failed to load level:', error);
+                }
+            }
+            
+            // Check if we should load a custom level from the editor
+            if (localStorage.getItem('loadCustomLevel') === 'true') {
+                const customLevel = localStorage.getItem('customLevel');
+                if (customLevel) {
+                    try {
+                        game.loadLevel(JSON.parse(customLevel));
+                        localStorage.removeItem('loadCustomLevel');
+                        localStorage.removeItem('customLevel');
+                    } catch (error) {
+                        console.error('Failed to load custom level:', error);
+                    }
+                }
+            }
+            
+            game.start();
+            setupTouchControls();
+        });
+        
+        // Game control functions
+        function pauseGame() {
+            if (game && !isPaused) {
+                game.pause();
+                isPaused = true;
+                document.getElementById('pauseMenu').style.display = 'block';
+            }
+        }
+        
+        function resumeGame() {
+            if (game && isPaused) {
+                game.resume();
+                isPaused = false;
+                document.getElementById('pauseMenu').style.display = 'none';
+            }
+        }
+        
+        function showInGameMenu() {
+            if (game) {
+                game.pause();
+                document.getElementById('inGameMenu').style.display = 'block';
+            }
+        }
+        
+        function hideInGameMenu() {
+            if (game) {
+                game.resume();
+                document.getElementById('inGameMenu').style.display = 'none';
+            }
+        }
+        
+        function restartLevel() {
+            if (game) {
+                game.restartLevel();
+                hideAllMenus();
+            }
+        }
+        
+        function nextLevel() {
+            if (game) {
+                game.nextLevel();
+                hideAllMenus();
+            }
+        }
+        
+        function saveGame() {
+            if (game) {
+                game.saveGame();
+                alert('Game saved!');
+            }
+        }
+        
+        function loadGame() {
+            if (game) {
+                game.loadGame();
+                hideAllMenus();
+            }
+        }
+        
+        function hideAllMenus() {
+            document.querySelectorAll('.overlay-menu').forEach(menu => {
+                menu.style.display = 'none';
+            });
+            isPaused = false;
+        }
+        
+        function showControls() {
+            alert('Arrow Keys/WASD: Move\nSpace: Jump\nShift: Dash\nX: Attack\nZ: Special Action');
+        }
+        
+        function showSettings() {
+            alert('Settings menu coming soon!');
+        }
+        
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case 'Escape':
+                    if (isPaused) {
+                        resumeGame();
+                    } else {
+                        pauseGame();
+                    }
+                    break;
+                case 'p':
+                case 'P':
+                    if (isPaused) {
+                        resumeGame();
+                    } else {
+                        pauseGame();
+                    }
+                    break;
+            }
+        });
+        
+        // Touch controls setup
+        function setupTouchControls() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile) {
+                document.getElementById('touchControls').style.display = 'flex';
+                
+                // Touch event handlers
+                const touchButtons = {
+                    touchLeft: () => game.inputManager.setKey('ArrowLeft', true),
+                    touchRight: () => game.inputManager.setKey('ArrowRight', true),
+                    touchUp: () => game.inputManager.setKey('ArrowUp', true),
+                    touchDown: () => game.inputManager.setKey('ArrowDown', true),
+                    touchJump: () => game.inputManager.setKey(' ', true),
+                    touchAttack: () => game.inputManager.setKey('x', true),
+                    touchDash: () => game.inputManager.setKey('Shift', true)
+                };
+                
+                Object.entries(touchButtons).forEach(([id, action]) => {
+                    const btn = document.getElementById(id);
+                    btn.addEventListener('touchstart', action);
+                    btn.addEventListener('touchend', () => {
+                        // Release key on touch end
+                        const key = id === 'touchLeft' ? 'ArrowLeft' :
+                                   id === 'touchRight' ? 'ArrowRight' :
+                                   id === 'touchUp' ? 'ArrowUp' :
+                                   id === 'touchDown' ? 'ArrowDown' :
+                                   id === 'touchJump' ? ' ' :
+                                   id === 'touchAttack' ? 'x' :
+                                   id === 'touchDash' ? 'Shift' : '';
+                        if (key) game.inputManager.setKey(key, false);
+                    });
+                });
+            }
+        }
+        
+        // Pause button handler
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            if (isPaused) {
+                resumeGame();
+            } else {
+                pauseGame();
+            }
+        });
+        
+        // Window focus/blur handling
+        window.addEventListener('blur', () => {
+            if (game && !isPaused) {
+                pauseGame();
+            }
+        });
+    </script>
+</body>
+</html>

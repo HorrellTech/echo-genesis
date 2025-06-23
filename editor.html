@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Echo Genesis - Level Editor</title>
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/editor.css">
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
+</head>
+<body class="editor-body">
+    <!-- Header -->
+    <header class="editor-header">
+        <div class="editor-title">
+            <h1>Echo Genesis Level Editor</h1>
+            <span class="level-name" id="levelName">Untitled Level</span>
+        </div>
+        
+        <div class="editor-controls">
+            <button class="btn btn-primary" id="playTestBtn">
+                <i class="icon">▶</i> Play Test
+            </button>
+            <button class="btn btn-secondary" id="saveBtn">
+                <i class="icon">💾</i> Save
+            </button>
+            <button class="btn btn-secondary" id="loadBtn">
+                <i class="icon">📁</i> Load
+            </button>
+            <button class="btn btn-secondary" id="exportBtn">
+                <i class="icon">📤</i> Export
+            </button>
+            <button class="btn btn-outline" id="settingsBtn">
+                <i class="icon">⚙️</i> Settings
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Editor Area -->
+    <div class="editor-container">
+        <!-- Tool Panel -->
+        <aside class="tool-panel">
+            <div class="tool-section">
+                <h3>Tools</h3>
+                <div class="tool-buttons">
+                    <button class="tool-btn active" data-tool="brush" title="Brush Tool (B)">
+                        <i class="icon">🖌️</i>
+                    </button>
+                    <button class="tool-btn" data-tool="eraser" title="Eraser Tool (E)">
+                        <i class="icon">🧹</i>
+                    </button>
+                    <button class="tool-btn" data-tool="fill" title="Fill Tool (F)">
+                        <i class="icon">🪣</i>
+                    </button>
+                    <button class="tool-btn" data-tool="select" title="Select Tool (S)">
+                        <i class="icon">📦</i>
+                    </button>
+                    <button class="tool-btn" data-tool="entity" title="Entity Tool (T)">
+                        <i class="icon">🎯</i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <h3>Layers</h3>
+                <div class="layer-controls">
+                    <div class="layer-item active" data-layer="collision">
+                        <input type="checkbox" id="collisionVisible" checked>
+                        <label for="collisionVisible">Collision</label>
+                        <span class="layer-opacity">100%</span>
+                    </div>
+                    <div class="layer-item" data-layer="background">
+                        <input type="checkbox" id="backgroundVisible" checked>
+                        <label for="backgroundVisible">Background</label>
+                        <span class="layer-opacity">100%</span>
+                    </div>
+                    <div class="layer-item" data-layer="foreground">
+                        <input type="checkbox" id="foregroundVisible" checked>
+                        <label for="foregroundVisible">Foreground</label>
+                        <span class="layer-opacity">100%</span>
+                    </div>
+                    <div class="layer-item" data-layer="entities">
+                        <input type="checkbox" id="entitiesVisible" checked>
+                        <label for="entitiesVisible">Entities</label>
+                        <span class="layer-opacity">100%</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <h3>Tiles</h3>
+                <div class="tileset-controls">
+                    <select id="tilesetSelect">
+                        <option value="default">Default Tileset</option>
+                    </select>
+                    <div class="tile-palette" id="tilePalette">
+                        <!-- Tiles will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="tool-section">
+                <h3>Entities</h3>
+                <div class="entity-palette">
+                    <div class="entity-category">
+                        <h4>Player</h4>
+                        <button class="entity-btn" data-entity="player_spawn">
+                            <i class="icon">👤</i> Spawn
+                        </button>
+                    </div>
+                    <div class="entity-category">
+                        <h4>Items</h4>
+                        <button class="entity-btn" data-entity="powerup">
+                            <i class="icon">⭐</i> Power-up
+                        </button>
+                        <button class="entity-btn" data-entity="health">
+                            <i class="icon">❤️</i> Health
+                        </button>
+                        <button class="entity-btn" data-entity="checkpoint">
+                            <i class="icon">🏁</i> Checkpoint
+                        </button>
+                    </div>
+                    <div class="entity-category">
+                        <h4>Enemies</h4>
+                        <button class="entity-btn" data-entity="basic_enemy">
+                            <i class="icon">👾</i> Basic
+                        </button>
+                        <button class="entity-btn" data-entity="flying_enemy">
+                            <i class="icon">🛸</i> Flying
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Canvas Area -->
+        <div class="canvas-container">
+            <div class="canvas-header">
+                <div class="canvas-controls">
+                    <button class="btn btn-small" id="zoomOutBtn">-</button>
+                    <span class="zoom-level" id="zoomLevel">100%</span>
+                    <button class="btn btn-small" id="zoomInBtn">+</button>
+                    <button class="btn btn-small" id="resetZoomBtn">Reset</button>
+                </div>                <div class="canvas-info">
+                    <span id="cursorPosition">0, 0</span>
+                    <span id="levelSize">100 x 50</span>
+                    <span id="debugModeIndicator" class="debug-indicator">DEBUG</span>
+                </div>
+            </div>
+            
+            <div class="canvas-wrapper" id="canvasWrapper">
+                <canvas id="editorCanvas" width="3200" height="1600"></canvas>
+                <div class="canvas-overlay" id="canvasOverlay">
+                    <!-- Grid and UI overlays -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Properties Panel -->
+        <aside class="properties-panel">
+            <div class="property-section">
+                <h3>Selection</h3>
+                <div id="selectionProperties">
+                    <p class="no-selection">Nothing selected</p>
+                </div>
+            </div>
+
+            <div class="property-section">
+                <h3>Level Properties</h3>
+                <div class="property-group">
+                    <label for="levelWidth">Width (tiles):</label>
+                    <input type="number" id="levelWidth" value="100" min="10" max="500">
+                </div>
+                <div class="property-group">
+                    <label for="levelHeight">Height (tiles):</label>
+                    <input type="number" id="levelHeight" value="50" min="10" max="200">
+                </div>
+                <div class="property-group">
+                    <label for="tileSize">Tile Size:</label>
+                    <input type="number" id="tileSize" value="32" min="16" max="64" step="8">
+                </div>
+                <div class="property-group">
+                    <label for="gravity">Gravity:</label>
+                    <input type="number" id="gravity" value="800" min="0" max="2000" step="50">
+                </div>
+                <div class="property-group">
+                    <label for="backgroundColor">Background Color:</label>
+                    <input type="color" id="backgroundColor" value="#1a1a2e">
+                </div>
+            </div>
+
+            <div class="property-section">
+                <h3>Grid</h3>
+                <div class="property-group">
+                    <label>
+                        <input type="checkbox" id="showGrid" checked>
+                        Show Grid
+                    </label>
+                </div>
+                <div class="property-group">
+                    <label>
+                        <input type="checkbox" id="snapToGrid" checked>
+                        Snap to Grid
+                    </label>
+                </div>
+                <div class="property-group">
+                    <label for="gridSize">Grid Size:</label>
+                    <input type="number" id="gridSize" value="32" min="8" max="64" step="8">
+                </div>
+            </div>
+
+            <div class="property-section">
+                <h3>Statistics</h3>
+                <div class="stats-display" id="levelStats">
+                    <div class="stat-item">
+                        <span class="stat-label">Entities:</span>
+                        <span class="stat-value" id="entityCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Tiles Used:</span>
+                        <span class="stat-value" id="tileCount">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">File Size:</span>
+                        <span class="stat-value" id="fileSize">0 KB</span>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Modals -->
+    <!-- Level Settings Modal -->
+    <div class="modal" id="levelSettingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Level Settings</h3>
+                <button class="modal-close" data-modal="levelSettingsModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="levelNameInput">Level Name:</label>
+                    <input type="text" id="levelNameInput" placeholder="Enter level name">
+                </div>
+                <div class="form-group">
+                    <label for="levelAuthor">Author:</label>
+                    <input type="text" id="levelAuthor" placeholder="Enter author name">
+                </div>
+                <div class="form-group">
+                    <label for="levelDescription">Description:</label>
+                    <textarea id="levelDescription" placeholder="Enter level description"></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="levelMusic">Background Music:</label>
+                    <select id="levelMusic">
+                        <option value="">None</option>
+                        <option value="ambient1">Ambient 1</option>
+                        <option value="ambient2">Ambient 2</option>
+                        <option value="explore">Exploration</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="saveLevelSettings">Save Settings</button>
+                <button class="btn btn-secondary" data-modal="levelSettingsModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Level Modal -->
+    <div class="modal" id="loadLevelModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Load Level</h3>
+                <button class="modal-close" data-modal="loadLevelModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="load-tabs">
+                    <button class="tab-btn active" data-tab="saved">Saved Levels</button>
+                    <button class="tab-btn" data-tab="import">Import File</button>
+                </div>
+                <div class="tab-content active" id="savedTab">
+                    <div class="level-list" id="savedLevelsList">
+                        <!-- Saved levels will be populated here -->
+                    </div>
+                </div>
+                <div class="tab-content" id="importTab">
+                    <div class="import-area">
+                        <input type="file" id="importFileInput" accept=".json" style="display: none;">
+                        <button class="btn btn-outline" id="selectFileBtn">Select File</button>
+                        <p class="import-info">Choose a JSON level file to import</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="loadSelectedLevel">Load Level</button>
+                <button class="btn btn-secondary" data-modal="loadLevelModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Entity Properties Modal -->
+    <div class="modal" id="entityPropertiesModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Entity Properties</h3>
+                <button class="modal-close" data-modal="entityPropertiesModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="entityPropertiesContent">
+                    <!-- Entity properties will be populated here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="saveEntityProperties">Save Properties</button>
+                <button class="btn btn-danger" id="deleteEntity">Delete Entity</button>
+                <button class="btn btn-secondary" data-modal="entityPropertiesModal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirmModal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <h3 id="confirmTitle">Confirm Action</h3>
+            </div>
+            <div class="modal-body">
+                <p id="confirmMessage">Are you sure you want to continue?</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" id="confirmYes">Yes</button>
+                <button class="btn btn-secondary" id="confirmNo">No</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="js/editor/LevelEditor.js"></script>
+</body>
+</html>
